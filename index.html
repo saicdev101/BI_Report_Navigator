@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BI Navigator - Report Inventory</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Brand Colors */
+            --primary-blue: #0C2074;
+            --primary-blue-light: #1A35AC;
+            --primary-blue-dark: #081828;
+            --accent-red: #A34343;
+            --accent-red-hover: #B82C31;
+            --accent-red-light: rgba(164, 52, 58, 0.1);
+            --white: #FFFFFF;
+            --light-grey: #F5F6F8;
+            --medium-grey: #E8EAED;
+            --dark-grey: #6B7280;
+            --text-dark: #1F2937;
+            --text-medium: #4B5563;
+            --success-green: #10B981;
+            
+            /* Design Tokens */
+            --radius-small: 4px;
+            --radius-medium: 8px;
+            --radius-large: 12px;
+            --transition: 0.2s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-dark);
+            background-color: var(--light-grey);
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Left Navigation Panel */
+        .nav-panel {
+            width: 280px;
+            background: linear-gradient(180deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            transition: width var(--transition);
+        }
+
+        .nav-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .nav-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .nav-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .nav-logo i {
+            font-size: 24px;
+        }
+
+        .nav-categories {
+            padding: 20px 0;
+        }
+
+        .category {
+            margin-bottom: 8px;
+        }
+
+        .category-header {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background-color var(--transition);
+            user-select: none;
+        }
+
+        .category-header:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .category-title {
+            font-weight: 500;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .category-chevron {
+            transition: transform var(--transition);
+        }
+
+        .category.expanded .category-chevron {
+            transform: rotate(180deg);
+        }
+
+        .category-items {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition);
+        }
+
+        .category.expanded .category-items {
+            max-height: 500px;
+        }
+
+        .category-item {
+            padding: 10px 20px 10px 40px;
+            cursor: pointer;
+            transition: all var(--transition);
+            position: relative;
+            border-left: 3px solid transparent;
+        }
+
+        .category-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .category-item.selected {
+            background-color: var(--accent-red-light);
+            border-left-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .content-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--radius-medium);
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: all var(--transition);
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .content-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        /* Active Filters Card */
+        .filters-card {
+            background-color: var(--white);
+            padding: 20px;
+            border-radius: var(--radius-large);
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .filters-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .filters-label {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .clear-all-btn {
+            background: none;
+            border: none;
+            color: var(--accent-red);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: var(--radius-small);
+            transition: all var(--transition);
+        }
+
+        .clear-all-btn:hover {
+            background-color: var(--accent-red-light);
+        }
+
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background-color: var(--accent-red-light);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+            border-radius: var(--radius-medium);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .filter-chip i {
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .filter-chip i:hover {
+            color: var(--accent-red-hover);
+        }
+
+        .no-filters {
+            color: var(--text-medium);
+            font-style: italic;
+        }
+
+        /* Table */
+        .table-container {
+            background-color: var(--white);
+            border-radius: var(--radius-large);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: var(--light-grey);
+            border-bottom: 2px solid var(--medium-grey);
+        }
+
+        th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color var(--transition);
+        }
+
+        th:hover {
+            background-color: var(--medium-grey);
+        }
+
+        th.sortable {
+            position: relative;
+            padding-right: 32px;
+        }
+
+        .sort-icon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--dark-grey);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--medium-grey);
+            transition: background-color var(--transition);
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        tbody tr:hover {
+            background-color: var(--light-grey);
+        }
+
+        td {
+            padding: 16px;
+            color: var(--text-medium);
+        }
+
+        td:first-child {
+            color: var(--primary-blue);
+            font-weight: 500;
+        }
+
+        .tag-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background-color: var(--accent-red);
+            color: var(--white);
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 6px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .tag-badge:hover {
+            background-color: var(--accent-red-hover);
+            transform: translateY(-1px);
+        }
+
+        .open-link {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color var(--transition);
+        }
+
+        .open-link:hover {
+            color: var(--primary-blue-light);
+            text-decoration: underline;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-medium);
+            font-style: italic;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            border-top: 1px solid var(--medium-grey);
+        }
+
+        .pagination-info {
+            color: var(--text-medium);
+            font-size: 13px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--medium-grey);
+            background-color: var(--white);
+            color: var(--text-dark);
+            border-radius: var(--radius-small);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all var(--transition);
+            min-width: 36px;
+            text-align: center;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background-color: var(--light-grey);
+            border-color: var(--dark-grey);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-btn.active {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border-color: var(--primary-blue);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .nav-panel {
+                width: 240px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .nav-panel {
+                width: 220px;
+            }
+            
+            .content-header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left Navigation Panel -->
+        <nav class="nav-panel">
+            <div class="nav-header">
+                <div class="nav-logo">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>BI Navigator</span>
+                </div>
+            </div>
+            <div id="navContent">
+                <div class="nav-categories"></div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1 class="content-title">Report Inventory</h1>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Search reports..." 
+                        aria-label="Search reports"
+                    >
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- Active Filters Card -->
+                <div class="filters-card">
+                    <div class="filters-header">
+                        <span class="filters-label">Active Filters:</span>
+                        <button id="clearAllBtn" class="clear-all-btn" style="display: none;">
+                            Clear All
+                        </button>
+                    </div>
+                    <div id="filterChips" class="filter-chips">
+                        <span class="no-filters">No filters selected</span>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-column="name">
+                                    Report Name
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="sortable" data-column="tags">
+                                    Tags
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th>Link</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Table rows will be inserted here -->
+                        </tbody>
+                    </table>
+                    <div id="noResults" class="no-results" style="display: none;">
+                        No reports found matching your criteria.
+                    </div>
+                    <div class="pagination">
+                        <div id="paginationInfo" class="pagination-info"></div>
+                        <div class="pagination-controls" id="paginationControls"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Embedded Data from Excel File
+        const REPORTS_DATA = [
+  {
+    "name": "Monthly Revenue Dashboard",
+    "link": "https://bi.company.com/revenue-monthly",
+    "tags": [
+      "High level Reports",
+      "Revenue",
+      "Finance"
+    ]
+  },
+  {
+    "name": "Daily Sales Volume Tracker",
+    "link": "https://bi.company.com/sales-volume",
+    "tags": [
+      "Volume",
+      "Product",
+      "SSS"
+    ]
+  },
+  {
+    "name": "Customer Count Analysis",
+    "link": "https://bi.company.com/customer-counts",
+    "tags": [
+      "Counts",
+      "Operations",
+      "IYNB"
+    ]
+  },
+  {
+    "name": "Executive KPI Summary",
+    "link": "https://bi.company.com/exec-kpi",
+    "tags": [
+      "High level Reports",
+      "Revenue",
+      "Volume",
+      "Counts"
+    ]
+  },
+  {
+    "name": "Product Performance Report",
+    "link": "https://bi.company.com/product-perf",
+    "tags": [
+      "Product",
+      "Revenue",
+      "SSS"
+    ]
+  },
+  {
+    "name": "Operational Efficiency Metrics",
+    "link": "https://bi.company.com/ops-efficiency",
+    "tags": [
+      "Operations",
+      "Volume",
+      "Counts"
+    ]
+  },
+  {
+    "name": "Financial Reconciliation Report",
+    "link": "https://bi.company.com/fin-recon",
+    "tags": [
+      "Finance",
+      "Revenue"
+    ]
+  },
+  {
+    "name": "IYNB Initiative Tracker",
+    "link": "https://bi.company.com/iynb-tracker",
+    "tags": [
+      "IYNB",
+      "Counts",
+      "Operations"
+    ]
+  },
+  {
+    "name": "Same Store Sales Analysis",
+    "link": "https://bi.company.com/sss-analysis",
+    "tags": [
+      "SSS",
+      "Revenue",
+      "Product"
+    ]
+  },
+  {
+    "name": "Quarterly Business Review",
+    "link": "https://bi.company.com/qbr",
+    "tags": [
+      "High level Reports",
+      "Revenue",
+      "Volume",
+      "Product",
+      "Finance"
+    ]
+  }
+];
+
+        // Application State
+        const state = {
+            reports: REPORTS_DATA,
+            filteredReports: [],
+            categories: {
+                'KPI': ['Revenue', 'Volume', 'Attrition', 'Counts', 'Pipeline'],
+                'Focus area': ['Same Store Sales', 'New Business', 'IYNB/PYNB', 'Tech Led'],
+                'Revenue Owner': ['CBB', 'ICG', 'Partner Revenue'],
+                'Business line': ['Finance', 'Operations', 'Product', 'EPMO', 'Customer reports']
+            },
+            selectedTags: ['High level Reports'],
+            searchQuery: '',
+            currentPage: 1,
+            itemsPerPage: 10,
+            sortColumn: null,
+            sortDirection: 'asc'
+        };
+
+        // Initialize Application
+        function init() {
+            console.log('Initializing with', state.reports.length, 'reports');
+            renderNavigation();
+            applyFilters();
+            attachEventListeners();
+        }
+
+        // Render Navigation
+        function renderNavigation() {
+            const navContent = document.querySelector('.nav-categories');
+            const categoriesHTML = Object.entries(state.categories).map(([categoryName, tags]) => `
+                <div class="category">
+                    <div class="category-header" onclick="toggleCategory(this)">
+                        <span class="category-title">${categoryName}</span>
+                        <i class="fas fa-chevron-down category-chevron"></i>
+                    </div>
+                    <div class="category-items">
+                        ${tags.map(tag => `
+                            <div class="category-item ${state.selectedTags.includes(tag) ? 'selected' : ''}" 
+                                 onclick="toggleTag('${tag}')">
+                                ${tag}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            navContent.innerHTML = categoriesHTML;
+        }
+
+        // Toggle Category
+        function toggleCategory(element) {
+            const category = element.parentElement;
+            const wasExpanded = category.classList.contains('expanded');
+            
+            // Close all other categories
+            const allCategories = document.querySelectorAll('.category');
+            allCategories.forEach(cat => {
+                if (cat !== category) {
+                    cat.classList.remove('expanded');
+                }
+            });
+            
+            // Toggle current category
+            if (wasExpanded) {
+                category.classList.remove('expanded');
+            } else {
+                category.classList.add('expanded');
+            }
+        }
+
+        // Toggle Tag Filter
+        function toggleTag(tag) {
+            // Single selection only - replace the current selection
+            if (state.selectedTags.includes(tag)) {
+                // If clicking the same tag, deselect it (show all reports)
+                state.selectedTags = [];
+            } else {
+                // Select only this tag
+                state.selectedTags = [tag];
+            }
+
+            state.currentPage = 1;
+            renderNavigation();
+            
+            // Keep the parent category expanded
+            setTimeout(() => {
+                const allCategories = document.querySelectorAll('.category');
+                allCategories.forEach(cat => {
+                    const items = cat.querySelectorAll('.category-item');
+                    const hasSelected = Array.from(items).some(item => item.classList.contains('selected'));
+                    if (hasSelected) {
+                        cat.classList.add('expanded');
+                    }
+                });
+            }, 0);
+            
+            applyFilters();
+        }
+
+        // Apply Filters
+        function applyFilters() {
+            let filtered = state.reports;
+
+            // Apply tag filters (single selection)
+            if (state.selectedTags.length > 0) {
+                filtered = filtered.filter(report => 
+                    report.tags.some(tag => state.selectedTags.includes(tag))
+                );
+            }
+            // If no tags selected, show all reports
+
+            // Apply search query
+            if (state.searchQuery) {
+                const query = state.searchQuery.toLowerCase();
+                filtered = filtered.filter(report => 
+                    report.name.toLowerCase().includes(query) ||
+                    report.tags.some(tag => tag.toLowerCase().includes(query))
+                );
+            }
+
+            // Apply sorting
+            if (state.sortColumn) {
+                filtered.sort((a, b) => {
+                    let valueA, valueB;
+                    
+                    if (state.sortColumn === 'name') {
+                        valueA = a.name.toLowerCase();
+                        valueB = b.name.toLowerCase();
+                    } else if (state.sortColumn === 'tags') {
+                        valueA = a.tags.join(', ').toLowerCase();
+                        valueB = b.tags.join(', ').toLowerCase();
+                    }
+
+                    if (valueA < valueB) return state.sortDirection === 'asc' ? -1 : 1;
+                    if (valueA > valueB) return state.sortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            state.filteredReports = filtered;
+            renderTable();
+            renderFilterChips();
+            renderPagination();
+        }
+
+        // Render Filter Chips
+        function renderFilterChips() {
+            const filterChips = document.getElementById('filterChips');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+
+            if (state.selectedTags.length === 0) {
+                filterChips.innerHTML = '<span class="no-filters">No filters selected</span>';
+                clearAllBtn.style.display = 'none';
+            } else {
+                filterChips.innerHTML = state.selectedTags.map(tag => `
+                    <span class="filter-chip">
+                        ${tag}
+                        <i class="fas fa-times" onclick="toggleTag('${tag}')"></i>
+                    </span>
+                `).join('');
+                clearAllBtn.style.display = 'block';
+            }
+        }
+
+        // Clear All Filters
+        function clearAllFilters() {
+            state.selectedTags = [];
+            state.searchQuery = '';
+            state.currentPage = 1;
+            document.getElementById('searchInput').value = '';
+            renderNavigation();
+            applyFilters();
+        }
+
+        // Render Table
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const noResults = document.getElementById('noResults');
+            const start = (state.currentPage - 1) * state.itemsPerPage;
+            const end = start + state.itemsPerPage;
+            const pageReports = state.filteredReports.slice(start, end);
+
+            if (pageReports.length === 0) {
+                tbody.innerHTML = '';
+                noResults.style.display = 'block';
+            } else {
+                noResults.style.display = 'none';
+                tbody.innerHTML = pageReports.map((report, index) => `
+                    <tr style="animation-delay: ${index * 0.05}s">
+                        <td>${report.name}</td>
+                        <td>
+                            ${report.tags.map(tag => 
+                                `<span class="tag-badge" onclick="toggleTag('${tag}')">${tag}</span>`
+                            ).join('')}
+                        </td>
+                        <td><a href="${report.link}" class="open-link" target="_blank" rel="noopener noreferrer">Open</a></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Render Pagination
+        function renderPagination() {
+            const totalPages = Math.ceil(state.filteredReports.length / state.itemsPerPage);
+            const paginationInfo = document.getElementById('paginationInfo');
+            const paginationControls = document.getElementById('paginationControls');
+
+            const start = (state.currentPage - 1) * state.itemsPerPage + 1;
+            const end = Math.min(state.currentPage * state.itemsPerPage, state.filteredReports.length);
+            
+            paginationInfo.textContent = state.filteredReports.length > 0 
+                ? `Showing ${start}–${end} of ${state.filteredReports.length} reports`
+                : 'Showing 0 reports';
+
+            // Generate page numbers (max 5)
+            let pages = [];
+            if (totalPages <= 5) {
+                pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+            } else {
+                if (state.currentPage <= 3) {
+                    pages = [1, 2, 3, 4, 5];
+                } else if (state.currentPage >= totalPages - 2) {
+                    pages = [totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+                } else {
+                    pages = [state.currentPage - 2, state.currentPage - 1, state.currentPage, state.currentPage + 1, state.currentPage + 2];
+                }
+            }
+
+            paginationControls.innerHTML = `
+                <button class="page-btn" onclick="changePage(${state.currentPage - 1})" ${state.currentPage === 1 ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                ${pages.map(page => `
+                    <button class="page-btn ${page === state.currentPage ? 'active' : ''}" onclick="changePage(${page})">
+                        ${page}
+                    </button>
+                `).join('')}
+                <button class="page-btn" onclick="changePage(${state.currentPage + 1})" ${state.currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            `;
+        }
+
+        // Change Page
+        function changePage(page) {
+            const totalPages = Math.ceil(state.filteredReports.length / state.itemsPerPage);
+            if (page < 1 || page > totalPages) return;
+            state.currentPage = page;
+            renderTable();
+            renderPagination();
+        }
+
+        // Sort Table
+        function sortTable(column) {
+            if (state.sortColumn === column) {
+                state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.sortColumn = column;
+                state.sortDirection = 'asc';
+            }
+
+            updateSortIcons();
+            applyFilters();
+        }
+
+        // Update Sort Icons
+        function updateSortIcons() {
+            document.querySelectorAll('th.sortable').forEach(th => {
+                const icon = th.querySelector('.sort-icon');
+                const column = th.dataset.column;
+                
+                if (column === state.sortColumn) {
+                    icon.className = `fas fa-sort-${state.sortDirection === 'asc' ? 'up' : 'down'} sort-icon`;
+                } else {
+                    icon.className = 'fas fa-sort sort-icon';
+                }
+            });
+        }
+
+        // Attach Event Listeners
+        function attachEventListeners() {
+            // Search Input
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', (e) => {
+                state.searchQuery = e.target.value;
+                
+                // If user starts searching, clear High level Reports filter
+                if (state.searchQuery && state.selectedTags.includes('High level Reports')) {
+                    state.selectedTags = [];
+                    renderNavigation();
+                }
+                
+                state.currentPage = 1;
+                applyFilters();
+            });
+
+            // Clear All Button
+            document.getElementById('clearAllBtn').addEventListener('click', clearAllFilters);
+
+            // Table Sort Headers
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.addEventListener('click', () => {
+                    sortTable(th.dataset.column);
+                });
+            });
+        }
+
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
